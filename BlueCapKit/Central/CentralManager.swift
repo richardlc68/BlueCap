@@ -161,6 +161,8 @@ public class CentralManager : NSObject, CBCentralManagerDelegate, CentralManager
     
     internal let impl = CentralManagerImpl<CentralManager>()
 
+    public var advMfrData: String!=nil
+    
     // CentralManagerWrappable
     public var poweredOn : Bool {
         return self.cbCentralManager.state == CBCentralManagerState.PoweredOn
@@ -272,6 +274,12 @@ public class CentralManager : NSObject, CBCentralManagerDelegate, CentralManager
     
     public func centralManager(_:CBCentralManager, didDiscoverPeripheral peripheral:CBPeripheral, advertisementData:[String:AnyObject], RSSI:NSNumber) {
         if self.discoveredPeripherals[peripheral] == nil {
+            let advertisements:[String:String]=self.unpackAdvertisements(advertisementData)
+            if self.advMfrData != "" {
+                if advertisements["kCBAdvDataManufacturerData"] != advMfrData {
+                    return
+                }
+            }
             let bcPeripheral = Peripheral(cbPeripheral:peripheral, advertisements:self.unpackAdvertisements(advertisementData), rssi:RSSI.integerValue)
             Logger.debug("peripheral name \(bcPeripheral.name)")
             self.discoveredPeripherals[peripheral] = bcPeripheral
@@ -324,17 +332,23 @@ public class CentralManager : NSObject, CBCentralManagerDelegate, CentralManager
             }
             Logger.debug("advertisement key=\(key), value=\(advertisements[key])")
         }
-        for key in advertDictionary.keys {
-            if let value : AnyObject = advertDictionary[key] {
-                if value is NSArray {
-                    for valueItem : AnyObject in (value as! NSArray) {
-                        addKey(key, andValue:valueItem)
+            for keyObject : NSObject in advertDictionary.keys {
+                if let key = keyObject as? String {
+                    if let value : AnyObject = advertDictionary[keyObject as! String] {
+                        if value is NSArray {
+                            for _ : AnyObject in (value as! NSArray) {
+                                addKey(key, andValue:value)
+                            }
+                        }
+                        else if value is NSData {
+                            let str=NSString(data: value as! NSData, encoding: NSUTF8StringEncoding) as? String ?? ""
+                            addKey(key, andValue:str)
+                        }else {
+                            addKey(key, andValue:value)
+                        }
                     }
-                } else {
-                    addKey(key, andValue:value)
                 }
             }
-        }
         return advertisements
     }
     

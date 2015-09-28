@@ -11,11 +11,13 @@ import Foundation
 public class Logger {
     public class func debug(message:String? = nil, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) {
 #if DEBUG
+    if let url = NSURL(fileURLWithPath: file).URLByDeletingPathExtension {
         if let message = message {
-            print("\(file):\(function):\(line): \(message)")
+            print("\(url):\(function):\(line): \(message)")
         } else {
-            print("\(file):\(function):\(line)")
+            print("\(url):\(function):\(line)")
         }
+    }
 #endif
     }
 

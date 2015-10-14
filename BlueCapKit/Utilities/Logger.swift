@@ -12,10 +12,12 @@ public class Logger {
     public class func debug(message:String? = nil, function: String = __FUNCTION__, file: String = __FILE__, line: Int = __LINE__) {
 #if DEBUG
     if let url = NSURL(fileURLWithPath: file).URLByDeletingPathExtension {
-        if let message = message {
-            print("\(url):\(function):\(line): \(message)")
-        } else {
-            print("\(url):\(function):\(line)")
+        if let fn = url.lastPathComponent {
+            if let message = message {
+                print("\(fn):\(function):\(line): \(message)")
+            } else {
+                print("\(fn):\(function):\(line)")
+            }
         }
     }
 #endif
